@@ -3,4 +3,4 @@ title: "Programmernotes"
 permalink: /
 ---
 
-# Programmernotes
+# Stay tuned in, folks!
