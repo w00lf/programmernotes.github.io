@@ -5,7 +5,7 @@ module.exports = {
       name: `Mikhail Tretiakov`,
     },
     description: `Helpfull articles about programming and software development`,
-    siteUrl: `http://programmernotes.info/`,
+    siteUrl: `https://programmernotes.info/`,
     // TODO: docial links
     social: {
       linkedin: `https://www.linkedin.com/in/mikhail-tretiakov-8ab9147b/`,
@@ -70,6 +70,12 @@ module.exports = {
       },
     },
     `gatsby-plugin-react-helmet`,
+    {
+      resolve: `gatsby-plugin-disqus`,
+      options: {
+        shortname: `programmernotes-info`
+      }
+    },
     // this (optional) plugin enables Progressive Web App + Offline functionality
     // To learn more, visit: https://gatsby.dev/offline
     // `gatsby-plugin-offline`,
