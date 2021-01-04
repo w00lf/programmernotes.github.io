@@ -1,6 +1,5 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { Link, graphql } from "gatsby"
-import { Disqus, CommentCount } from 'gatsby-plugin-disqus'
 
 import Bio from "../components/bio"
 import Layout from "../components/layout"
@@ -10,11 +9,14 @@ const BlogPostTemplate = ({ data, location }) => {
   const post = data.markdownRemark
   const siteTitle = data.site.siteMetadata?.title || `Title`
   const { previous, next } = data
-  const disqusConfig = {
-    url: `${data.site.siteMetadata.siteUrl+location.pathname}`,
-    identifier: location.pathname,
-    title: post.title,
-  }
+  useEffect(()=> {
+     (function() {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://programmernotes-info.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+      })();
+  });
 
   return (
     <Layout location={location} title={siteTitle}>
@@ -30,7 +32,6 @@ const BlogPostTemplate = ({ data, location }) => {
         <header>
           <h1 itemProp="headline">{post.frontmatter.title}</h1>
           <p>{post.frontmatter.date}</p>
-          <CommentCount config={disqusConfig} placeholder={'...'} />
         </header>
         <section
           dangerouslySetInnerHTML={{ __html: post.html }}
@@ -39,7 +40,8 @@ const BlogPostTemplate = ({ data, location }) => {
         <hr />
         <footer>
           <Bio />
-          <Disqus config={disqusConfig} />
+          <div id="disqus_thread"></div>
+          <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
         </footer>
       </article>
       <nav className="blog-post-nav">
