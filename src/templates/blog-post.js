@@ -4,11 +4,13 @@ import { Link, graphql } from "gatsby"
 import Bio from "../components/bio"
 import Layout from "../components/layout"
 import SEO from "../components/seo"
+import ShareButtons from "../components/share-buttons"
 
 const BlogPostTemplate = ({ data, location }) => {
   const post = data.markdownRemark
   const siteTitle = data.site.siteMetadata?.title || `Title`
   const { previous, next } = data
+  // Disqus setup START
   useEffect(()=> {
      (function() {
       var d = document, s = d.createElement('script');
@@ -17,6 +19,10 @@ const BlogPostTemplate = ({ data, location }) => {
       (d.head || d.body).appendChild(s);
       })();
   });
+  // Disqus setup END
+  const title = post.frontmatter.title;
+  const tags = data.markdownRemark.frontmatter.tags;
+  const url = location.href;
 
   return (
     <Layout location={location} title={siteTitle}>
@@ -40,6 +46,9 @@ const BlogPostTemplate = ({ data, location }) => {
         <hr />
         <footer>
           <Bio />
+          <div>
+            <ShareButtons title={title} url={url} twitterHandle={'name'} tags={tags}/>
+          </div>
           <div id="disqus_thread"></div>
           <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
         </footer>
