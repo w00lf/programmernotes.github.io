@@ -1,7 +1,7 @@
 ---
 title: Taming Europe routes, part 1
 date: "2021-01-03T18:12:03.284Z"
-description: "How to parse all Europe routes using hosted open street server"
+description: "How to parse almost 500 million routes with graphhopper server app and python scripts, part 1, review"
 ---
 
 This will be a series of long articles, so stay tuned in for the next posts. I will be talking about hosted solutions to work with large geocode data. This all started as a simple task back in the dreaded 2020. The task was like this: hey, can we parse a list of European cities and determine which one can be a good candidate for search optimization. The file itself was a list of European cities without England, mostly west Europe, and consisted of 33000 entries. In essence, the task was to take each city and combine it with other entries from this file and check with Google keyword planner if this combination can be a good option to search optimization. Simple mathematics gives us the total number of permutations from such number of entries:

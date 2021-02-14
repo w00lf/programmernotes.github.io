@@ -1,7 +1,7 @@
 ---
 title: Taming Europe routes, part 2
 date: "2021-01-12T19:30:00.284Z"
-description: "How to parse all Europe routes using hosted open street server"
+description: "How to parse almost 500 million routes with graphhopper server app and python scripts, part 2, server setup and data preparation, python scripts."
 ---
 
 ## TL:DR previous part
