@@ -1,4 +1,247 @@
-<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[Programming notes]]></title><description><![CDATA[Helpfull articles about programming and software development]]></description><link>https://programmernotes.info</link><generator>GatsbyJS</generator><lastBuildDate>Tue, 23 Feb 2021 18:58:18 GMT</lastBuildDate><item><title><![CDATA[Taming Europe routes, part 3]]></title><description><![CDATA[TL:DR previous parts I was approached by one of my clients with a work that required to parse almost 500 million European routes to see what…]]></description><link>https://programmernotes.info/taming-europe-routes-3/</link><guid isPermaLink="false">https://programmernotes.info/taming-europe-routes-3/</guid><pubDate>Sun, 14 Feb 2021 14:30:00 GMT</pubDate><content:encoded>&lt;h2&gt;TL:DR previous parts&lt;/h2&gt;
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[Programming notes]]></title><description><![CDATA[Helpfull articles about programming and software development]]></description><link>https://programmernotes.info</link><generator>GatsbyJS</generator><lastBuildDate>Mon, 06 Sep 2021 11:42:47 GMT</lastBuildDate><item><title><![CDATA[Stress testing with jmeter cluster on ec2 spot instances]]></title><description><![CDATA[Recently i needed to perform stress test testing on one of my projects. I needed to simulate user interactions at a high scale and determine…]]></description><link>https://programmernotes.info/jmeter-cluster-ec2-spot-testing/</link><guid isPermaLink="false">https://programmernotes.info/jmeter-cluster-ec2-spot-testing/</guid><pubDate>Sat, 04 Sep 2021 11:22:01 GMT</pubDate><content:encoded>&lt;p&gt;Recently i needed to perform stress test testing on one of my projects. I needed to simulate user interactions at a high scale and determine the exact breaking point of the application. Now, there are a lot of tools to do that, you even have cloud-based solutions that can do a lot of things for your $. Being an engineer i rejected such tools an was determined to create my own cloud testing stand, in additon i heard a lot about new aws instances type - &lt;a href=&quot;https://aws.amazon.com/ec2/spot/?cards.sort-by=item.additionalFields.startDateTime&amp;#x26;cards.sort-order=asc&amp;#x26;trk=ps_a134p000006vwFnAAI&amp;#x26;trkCampaign=acq_paid_search_brand&amp;#x26;sc_channel=PS&amp;#x26;sc_campaign=acquisition_RU&amp;#x26;sc_publisher=Google&amp;#x26;sc_category=Cloud%20Computing&amp;#x26;sc_country=RU&amp;#x26;sc_geo=EMEA&amp;#x26;sc_outcome=acq&amp;#x26;sc_detail=aws%20ec2%20spot%20instances&amp;#x26;sc_content=EC2%20Spot_e&amp;#x26;sc_matchtype=e&amp;#x26;sc_segment=517625976421&amp;#x26;sc_medium=ACQ-P%7CPS-GO%7CBrand%7CDesktop%7CSU%7CCloud%20Computing%7CEC2%20Spot%7CRU%7CEN%7CText&amp;#x26;s_kwcid=AL!4422!3!517625976421!e!!g!!aws%20ec2%20spot%20instances&amp;#x26;ef_id=Cj0KCQjwssyJBhDXARIsAK98ITS8mlje2FSiwzFXLeb9sFO-7OLtgi6GyIm0371n6GPjMeRmkfJ6DEAaAlRTEALw_wcB:G:s&amp;#x26;s_kwcid=AL!4422!3!517625976421!e!!g!!aws%20ec2%20spot%20instances&quot;&gt;Amazon EC2 Spot Instances&lt;/a&gt;. Spot instances are instances that consisted of leftovers of ec2 platform, eg amazon is running its huge servers to provide ec2 facilities and they don’t always used for 100%. That’s where you can save a lot of money if your setup does not require real-time availability. The catch here is that these leftovers can be claimed by aws at any time and your cheap t3.2xlarge instance will just go poof and be removed. Now, that can be addressed by enabling persistent support for additional $ and other settings but that’s a topic for another blog post.&lt;/p&gt;
+&lt;h2&gt;Stress test conditions&lt;/h2&gt;
+&lt;p&gt;I needed to perform a stress test with a sequence of requests written before by jmeter proxy requests. I needed at least 1000 active users in a span of a minute. In addition to api interaction, these scripts also required downloading large(5+Mb) static assets. After some manual testing, i determined i need at least &lt;code class=&quot;language-text&quot;&gt;t3.2xlarge&lt;/code&gt; server, preferably 2 of them. Jmeter is not the most efficient tool in terms of resource consumption, there are other ones like, for example &lt;a href=&quot;http://tsung.erlang-projects.org/&quot;&gt;tsung&lt;/a&gt; that can do it much more efficiently, but jmeter was the easiest one to use and spot instances allows you to not think a lot about consumed resources.&lt;/p&gt;
+&lt;h2&gt;Cluster server creation&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;First step go to ec2 page and press &lt;code class=&quot;language-text&quot;&gt;Launch instances&lt;/code&gt;, then select preferably os type, i choose Ubuntu 20 for its simplicity of configuration.&lt;/li&gt;
+&lt;li&gt;Choose your instance size, as described above, i needed at least 20Gb of memory so i decided to go with &lt;code class=&quot;language-text&quot;&gt;t3.2xlarge&lt;/code&gt;(8 cpu and 32 Gb of memory)
+&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 630px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/3486b70c2c97059f2cd44b2d10e2712c/2c960/instance_size.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 38.60759493670886%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAICAYAAAD5nd/tAAAACXBIWXMAABYlAAAWJQFJUiTwAAABPElEQVQoz3VR2XKDMAzk/3+y02sIkITYxrfNdiVo2j6UQWOtDntXGsZpxvjxivHzDeO04PpwcD7BbAF2i/Qj7tbD+sNPOSPnQsuHlfIHDylGhLChlAxjHogxQL9959/RW1MYgkc7/Vorczt677DGKBaT2kGCpVQt9N6zMWijWBVjofjruioDuei7ppDdPM8kQeYpK+aFbD5fFHYpJX1Z4mrtOCMvOZh1bdS+VrE5p+pqLYqHXBpCIujAwzgYS/m1Q+KJzCNzgm/3FSGyse3YOMtc+QhnN14mxZ65RDy4SDkuIRTgcjWYbxYudkjchqq5LXV8Tnf1fd5xM0Hzxhe8vF8Ua108JVdKkCWkFFFkTr8l9x/J7ZQs9ft/kmXwkXPbuRRjyI4FMsPnYnQpnTnzXIos4VhKxbIsiiUn+Atg2XBZOZzpKAAAAABJRU5ErkJggg==&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;img
+        class=&quot;gatsby-resp-image-image&quot;
+        alt=&quot;ec2 instance size&quot;
+        title=&quot;ec2 instance size&quot;
+        src=&quot;/static/3486b70c2c97059f2cd44b2d10e2712c/f058b/instance_size.png&quot;
+        srcset=&quot;/static/3486b70c2c97059f2cd44b2d10e2712c/c26ae/instance_size.png 158w,
+/static/3486b70c2c97059f2cd44b2d10e2712c/6bdcf/instance_size.png 315w,
+/static/3486b70c2c97059f2cd44b2d10e2712c/f058b/instance_size.png 630w,
+/static/3486b70c2c97059f2cd44b2d10e2712c/40601/instance_size.png 945w,
+/static/3486b70c2c97059f2cd44b2d10e2712c/78612/instance_size.png 1260w,
+/static/3486b70c2c97059f2cd44b2d10e2712c/2c960/instance_size.png 2870w&quot;
+        sizes=&quot;(max-width: 630px) 100vw, 630px&quot;
+        style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+        loading=&quot;lazy&quot;
+      /&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;Next, you need to actually tell amazon that you want to use spot instance: &lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 630px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/2f1d35854cc66c3e6f004f2598b780f6/9f75f/instance_details.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 43.67088607594937%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAJCAYAAAAywQxIAAAACXBIWXMAABYlAAAWJQFJUiTwAAABOklEQVQoz5WSC26DMAyGuf8BttvsBtsB1rWIUSgBmkDzgDzIP4c+VGmq1ln6cOyIP46drGpasJ6jYj1Yd0R9KCF4h5OeVpSZIMkLaVafYmvtQzKjNYzROPY9TuMAle/gyScLYYENEbOP8LR+xrL0iTEiXhKaHfFdc5RiQtFJ5OyEHZF82UuwwaAR+oKi+LxO+U55ZEkshIBhGGC0Ap8CCiZQVS16LjFod2M0Dmr2D9F2OQsmlFJ0dbMKF5sNqo93yO0X/mur4L0Z7yHaFrwsYamvoDhe2/IEtx5KKWGdg8xz8O0WIzHv94jL72HcHxCWMzfBaw97qkakPtY1OAlpmr6nZ+Bpz1OV1oV10tcf/7zyQpWkd+Qp1tO09jNQLh02zzPlHGa3rPWRNkapkZcNXt9qvBCfRQN2qPED7E6648KSUzQAAAAASUVORK5CYII=&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;img
+        class=&quot;gatsby-resp-image-image&quot;
+        alt=&quot;ec2 instance details&quot;
+        title=&quot;ec2 instance details&quot;
+        src=&quot;/static/2f1d35854cc66c3e6f004f2598b780f6/f058b/instance_details.png&quot;
+        srcset=&quot;/static/2f1d35854cc66c3e6f004f2598b780f6/c26ae/instance_details.png 158w,
+/static/2f1d35854cc66c3e6f004f2598b780f6/6bdcf/instance_details.png 315w,
+/static/2f1d35854cc66c3e6f004f2598b780f6/f058b/instance_details.png 630w,
+/static/2f1d35854cc66c3e6f004f2598b780f6/40601/instance_details.png 945w,
+/static/2f1d35854cc66c3e6f004f2598b780f6/78612/instance_details.png 1260w,
+/static/2f1d35854cc66c3e6f004f2598b780f6/9f75f/instance_details.png 2858w&quot;
+        sizes=&quot;(max-width: 630px) 100vw, 630px&quot;
+        style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+        loading=&quot;lazy&quot;
+      /&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;. We will be using 3 instances - one will work as jmeter master and results collector and the other will perform the actual testing. &lt;code class=&quot;language-text&quot;&gt;t3.2xlarge&lt;/code&gt; instance size for jmeter master is a little overkill, but again, i did not want to spend a lot of time on configuration. Check &lt;code class=&quot;language-text&quot;&gt;Request spot instances&lt;/code&gt; checkbox. After you check this option you will see the actual current prices for specified regions. Spot instances have floating pricing and can change depending on the time of the day and aws loading. In order to not blow up your budgets, you need to specify the maximum hourly price you are willing to pay for each instance. If your instance overcomes such price it will be terminated. For simplicity just set it 2 times the pricing of the current price, that will be more than safe.&lt;/li&gt;
+&lt;li&gt;Add some storage for the server. Jmeter uses static heap files for its testing, 1000 concurrent users with assets download will require at least 10Gb of disk storage, so we add 40 Gb disk.
+&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 630px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/dd29570646851f5d45f9cebaeb47df60/8b95f/instance_storage.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 44.93670886075949%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAJCAYAAAAywQxIAAAACXBIWXMAABYlAAAWJQFJUiTwAAABRUlEQVQoz32SaW6DMBCFuf8pKvUq7QX6N6pKMV6wsZ3YTghLeB0bpYuaBOljzJuZ5zFQ1Uyg4Qrvny1076EIbT2M4tCmh3H7oinjy9r5A0IIRESIibjGjYqxBpy3hUjJGHPxAZFIaXs+poSUc2QUjwNxwr2ratsWXdcVtNaQUkIpBescOGPoaC2K1sF7mpKmVlTLKJfr6vqj9AghS74SnMNZi77vCUMNBlwIGCoyb2/wux2k4GBNQ40C1pIh5fKJTO8gux6Wejn5FENtLNw+YFouxFrieVowTjPOzmMKCSPpWctM81Z398jCJdSKdtqfoPYDpD9t0LM8DAUVZooj5XPuCB0nnOdsumJd/1INtOswLtsUVJTjN/OmXfXfcbn8NyuGP8OuD8Ad7caRb+3yCLqBXiMC/T5MaDy/Kjy9KOyajj6OxhfEULSuofhKhAAAAABJRU5ErkJggg==&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;img
+        class=&quot;gatsby-resp-image-image&quot;
+        alt=&quot;Disk size&quot;
+        title=&quot;Disk size&quot;
+        src=&quot;/static/dd29570646851f5d45f9cebaeb47df60/f058b/instance_storage.png&quot;
+        srcset=&quot;/static/dd29570646851f5d45f9cebaeb47df60/c26ae/instance_storage.png 158w,
+/static/dd29570646851f5d45f9cebaeb47df60/6bdcf/instance_storage.png 315w,
+/static/dd29570646851f5d45f9cebaeb47df60/f058b/instance_storage.png 630w,
+/static/dd29570646851f5d45f9cebaeb47df60/40601/instance_storage.png 945w,
+/static/dd29570646851f5d45f9cebaeb47df60/78612/instance_storage.png 1260w,
+/static/dd29570646851f5d45f9cebaeb47df60/8b95f/instance_storage.png 2848w&quot;
+        sizes=&quot;(max-width: 630px) 100vw, 630px&quot;
+        style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+        loading=&quot;lazy&quot;
+      /&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;Skip tags step, go to 6th step: security settings. This is an important step for our setup. Because we are going to use Jmeter in cluster mode we need to open specific ports in order for the master and its cluster servers to communicate with each other and to servers to pass their test results back to the master. &lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 630px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/78346c0e4db9ae020a732b41821a3a72/3c1e5/instance_security.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 31.0126582278481%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAGCAYAAADDl76dAAAACXBIWXMAABYlAAAWJQFJUiTwAAABGUlEQVQY01VQ2W6DQAzk/3+rjULShBw9XqNGnA0BwrIHLDC1jSo1iJF3x2N71sF6G2FFeAk5HvC62WOzP2EbnSme8RadsAnXCNcrbHcRdscPnN6/cDwzPp9wIARlWeKnKJAkCdI0QZblUKqFtYZgYQ1Fo2G0gtbdwhNnmHM9rBuWPIH5APRN04y2bdEqheahqHGKPM9JZOC9x0DwgpG00z/MoP+JC/6c1HWNOI7F7fX6TU4zQUH32+2Gx6ORoX3fwzlHsFKntSbOCce5gAvu9zsMJauqImeFiLquI6cZeCXGWGnKA9l5VdVomkb0l8tF1sU67kUNcypWWJ4+Yhw9ME9y58mjH+TsKfKeeI98nqdR9I5eKNzQS/4XriPFDH1BROYAAAAASUVORK5CYII=&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;img
+        class=&quot;gatsby-resp-image-image&quot;
+        alt=&quot;ec2 Instance security&quot;
+        title=&quot;ec2 Instance security&quot;
+        src=&quot;/static/78346c0e4db9ae020a732b41821a3a72/f058b/instance_security.png&quot;
+        srcset=&quot;/static/78346c0e4db9ae020a732b41821a3a72/c26ae/instance_security.png 158w,
+/static/78346c0e4db9ae020a732b41821a3a72/6bdcf/instance_security.png 315w,
+/static/78346c0e4db9ae020a732b41821a3a72/f058b/instance_security.png 630w,
+/static/78346c0e4db9ae020a732b41821a3a72/40601/instance_security.png 945w,
+/static/78346c0e4db9ae020a732b41821a3a72/78612/instance_security.png 1260w,
+/static/78346c0e4db9ae020a732b41821a3a72/3c1e5/instance_security.png 2854w&quot;
+        sizes=&quot;(max-width: 630px) 100vw, 630px&quot;
+        style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+        loading=&quot;lazy&quot;
+      /&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;. Now i must warn you that the setting i use there is quite dangerous and you should never set up your production server as described above, but because i was going to use these servers for no more than 30m minutes and then just terminate them i decided to not bother with security group configuration and just allowed all incoming traffic to the servers, you should definitely use aws security groups for your production servers.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Server confuration&lt;/h2&gt;
+&lt;p&gt;After that, i got 3 servers preparing to launch i wrote a simple ansible role to actually configure these servers and load all necessary files.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yaml&quot;&gt;&lt;pre class=&quot;language-yaml&quot;&gt;&lt;code class=&quot;language-yaml&quot;&gt;&lt;span class=&quot;token punctuation&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Install openjdk
+  &lt;span class=&quot;token key atrule&quot;&gt;apt&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; openjdk&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;16&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;jre
+    &lt;span class=&quot;token key atrule&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; present
+    &lt;span class=&quot;token key atrule&quot;&gt;update_cache&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; yes
+  &lt;span class=&quot;token key atrule&quot;&gt;become&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; yes
+
+&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Install unzip
+  &lt;span class=&quot;token key atrule&quot;&gt;apt&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;  unzip
+    &lt;span class=&quot;token key atrule&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; present
+  &lt;span class=&quot;token key atrule&quot;&gt;become&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; yes
+
+&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Download and Unarchive jmeter
+  &lt;span class=&quot;token key atrule&quot;&gt;ansible.builtin.unarchive&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;src&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; https&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;//dlcdn.apache.org//jmeter/binaries/apache&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;jmeter&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;5.4.1.zip
+    &lt;span class=&quot;token key atrule&quot;&gt;dest&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; /home/ubuntu/
+    &lt;span class=&quot;token key atrule&quot;&gt;remote_src&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; yes
+
+&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Copy jmeter configs and binaries
+  &lt;span class=&quot;token key atrule&quot;&gt;copy&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; src=&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; item &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt; dest=/home/ubuntu/apache&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;jmeter&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt;5.4.1/bin/&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;{&lt;/span&gt; item &lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;}&lt;/span&gt; owner=ubuntu group=ubuntu
+  &lt;span class=&quot;token key atrule&quot;&gt;with_items&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; jmeter
+    &lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; jmeter.properties
+
+&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Create stress_test dir
+  &lt;span class=&quot;token key atrule&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;token key atrule&quot;&gt;state&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; directory
+    &lt;span class=&quot;token key atrule&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; /home/ubuntu/stress_test
+
+&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Copy jmeter script xml
+  &lt;span class=&quot;token key atrule&quot;&gt;copy&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; src=requests.jmx dest=/home/ubuntu/stress_test/requests.jmx owner=ubuntu group=ubuntu
+
+&lt;span class=&quot;token punctuation&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token key atrule&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; Copy seed csv
+  &lt;span class=&quot;token key atrule&quot;&gt;copy&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;:&lt;/span&gt; src=logins.csv dest=/home/ubuntu/stress_test/logins.csv owner=ubuntu group=ubuntu&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Let’s look into each step and see what there are doing. &lt;code class=&quot;language-text&quot;&gt;Install OpenJDK uses apt to install Java 16 environment to the server. We are going to download jmeter from the official site, unzip it and overwrite some config files.&lt;/code&gt;Install unzip&lt;code class=&quot;language-text&quot;&gt;is required for handling zip files.&lt;/code&gt;Download and Unarchive jmeter&lt;code class=&quot;language-text&quot;&gt;is used to download jmeter script and unzip it into the desired location.&lt;/code&gt;Copy jmeter configs and binaries&lt;code class=&quot;language-text&quot;&gt;is used to tweak our JMeter settings and optimize them. Custom&lt;/code&gt;JMeter&lt;code class=&quot;language-text&quot;&gt;file is used because of memory settings, by default JMeter uses a very small heap size equal to just 1Gb, if you do not change this item you will get&lt;/code&gt;Out of heap` error if you try to simulate a large number of requests, so we are changing this line:&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;diff&quot;&gt;&lt;pre class=&quot;language-diff&quot;&gt;&lt;code class=&quot;language-diff&quot;&gt;&lt;span class=&quot;token deleted-sign deleted&quot;&gt;&lt;span class=&quot;token prefix deleted&quot;&gt;-&lt;/span&gt;: &quot;${HEAP:=&quot;-Xms1g -Xmx1g -XX:MaxMetaspaceSize=256m&quot;}&quot;
+&lt;/span&gt;&lt;span class=&quot;token inserted-sign inserted&quot;&gt;&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;: &quot;${HEAP:=&quot;-Xms24g -Xmx24g -XX:MaxMetaspaceSize=256m&quot;}&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;code class=&quot;language-text&quot;&gt;jmeter.properties&lt;/code&gt; tells jmeter to disable ssl support completely(again we are using this one for simplicity):&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;diff&quot;&gt;&lt;pre class=&quot;language-diff&quot;&gt;&lt;code class=&quot;language-diff&quot;&gt;&lt;span class=&quot;token deleted-sign deleted&quot;&gt;&lt;span class=&quot;token prefix deleted&quot;&gt;-&lt;/span&gt;#server.rmi.ssl.disable=false
+&lt;/span&gt;&lt;span class=&quot;token inserted-sign inserted&quot;&gt;&lt;span class=&quot;token prefix inserted&quot;&gt;+&lt;/span&gt;server.rmi.ssl.disable=true&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Next, we are creating a results directory and actually copying the test &lt;code class=&quot;language-text&quot;&gt;jmx&lt;/code&gt; xml file and our users seed list(&lt;code class=&quot;language-text&quot;&gt;Copy seed csv&lt;/code&gt;) which is just a list of user credentials to use in order for login.&lt;/p&gt;
+&lt;p&gt;Next let’s actually deploy our settings and assets to our servers:&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;sh&quot;&gt;&lt;pre class=&quot;language-sh&quot;&gt;&lt;code class=&quot;language-sh&quot;&gt;$: ansible-playbook -i hosts jmeter_node.yml&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;Cluster testing&lt;/h2&gt;
+&lt;p&gt;Our servers are all set up and ready for action. Here is lying the final catch. If you try to launch &lt;code class=&quot;language-text&quot;&gt;jmeter-server&lt;/code&gt; on ec2 node you will receive a warning in the log file that it started to use internal ec2 node ip that is configured as the hostname for our servers and as such there will be problems with external requests and configuring servers to run the test. You actually need to use here your public ips:&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;sh&quot;&gt;&lt;pre class=&quot;language-sh&quot;&gt;&lt;code class=&quot;language-sh&quot;&gt;$: ./jmeter-server -Djava.rmi.server.hostname=%{YOUR_PUBLIC_IP}&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Again, if you have configured security groups for your servers you dont need such settings at all.&lt;/p&gt;
+&lt;p&gt;And the final step: launch testing on the cluster and write results into &lt;code class=&quot;language-text&quot;&gt;/home/ubuntu/stress_test/results&lt;/code&gt; folder and track the progress in &lt;code class=&quot;language-text&quot;&gt;/home/ubuntu/stress_test/results/main.csv&lt;/code&gt; file:&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;sh&quot;&gt;&lt;pre class=&quot;language-sh&quot;&gt;&lt;code class=&quot;language-sh&quot;&gt;mkdir -p /home/ubuntu/stress_test/results &amp;amp;&amp;amp; \
+	 	 ./jmeter -Djava.rmi.server.hostname=%{YOUR_PUBLIC_IP} \
+		-R ec2-1-*.compute-1.amazonaws.com,ec2-2-*.compute-1.amazonaws.com -n \
+		-t /home/ubuntu/stress_test/requests.jmx -l /home/ubuntu/stress_test/results/main.csv \
+		-e -o /home/ubuntu/stress_test/results&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;After the test is started you can track you progress through &lt;code class=&quot;language-text&quot;&gt;main.csv&lt;/code&gt; results file. In essence, it’s just a csv file that gets its line appended by cluster servers periodically.&lt;/p&gt;
+&lt;p&gt;Pandas is a perfect instrument to interpret your test results:&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;python&quot;&gt;&lt;pre class=&quot;language-python&quot;&gt;&lt;code class=&quot;language-python&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;import&lt;/span&gt; pandas
+&lt;span class=&quot;token keyword&quot;&gt;import&lt;/span&gt; matplotlib&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;pyplot &lt;span class=&quot;token keyword&quot;&gt;as&lt;/span&gt; plt
+
+stress &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; pandas&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;read_csv&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;main.csv&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+stress&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;timestamp&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; pandas&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;to_datetime&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;stress&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;timeStamp&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;unit&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;ms&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+time_series &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; stress&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;loc&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;stress&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;label&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;isin&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;Login request&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;timestamp&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&apos;responseCode&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;
+time_series\
+  &lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;groupby&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;pandas&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;Grouper&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;key&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;timestamp&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; freq&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;15s&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&apos;responseCode&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;\
+  &lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;count&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;\
+  &lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;reset_index&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;\
+  &lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;pivot&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;index&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;timestamp&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; columns&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&apos;responseCode&apos;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;\
+  &lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;plot&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;kind&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;bar&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; figsize&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;8&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; stacked&lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;token boolean&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Here i took the result csv downloaded from the server, converted its unix timestamp column into datetime then created data frame with timestamp/response code count grouped by each 15 seconds and then displayed a plot using &lt;code class=&quot;language-text&quot;&gt;matplotlib.pyplot&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;&lt;span
+      class=&quot;gatsby-resp-image-wrapper&quot;
+      style=&quot;position: relative; display: block; margin-left: auto; margin-right: auto; max-width: 630px; &quot;
+    &gt;
+      &lt;a
+    class=&quot;gatsby-resp-image-link&quot;
+    href=&quot;/static/868a208583d8b890c2d7f0ee7fbbaee0/9d6a9/pandas_plot.png&quot;
+    style=&quot;display: block&quot;
+    target=&quot;_blank&quot;
+    rel=&quot;noopener&quot;
+  &gt;
+    &lt;span
+    class=&quot;gatsby-resp-image-background-image&quot;
+    style=&quot;padding-bottom: 52.53164556962025%; position: relative; bottom: 0; left: 0; background-image: url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAALCAYAAAB/Ca1DAAAACXBIWXMAABYlAAAWJQFJUiTwAAABzElEQVQoz22S208TQRTG+Y9NxAsG8F0SX3jzwTuoXVnwSfSFINpCCEYopm3CTS5pl9rZ2fvuzJZ+npnZbUvjJpPffOc7883ZzU7JNEev14PjdHDtOJpqdbvX8BlHyhh810XgciRhgIR6Y9Kcu3DJY6Q5aUZ7z/UwhVwiiSP8ZdTk+eB+AEaH41RA9vtIZA6R95ESM1qp7CMjrfZSkzwhEQYBpMgoUD832Gg6WN45x9OvLdg/r7Cw3oS9d4EnnxtYKWjvXQ71wnpD+6qvsnuOxS+/cdnlJlBKgdfVUzzbPMbsah2vqmeYsQ+oZvimRlwptGJt5D+y65p3K/vYbDkmsO2GZBzg7fYfzK8das4Rl26xPsHDW/0P6aJvZWCHAmf1JKZRTaQOqkY18f+o/aJf8cHHscA2CzC3aiZ8/MlMNL824vKEHmfZrz7F1vgrT1v7eP7jVN/0gnhf8wz3iC8VrUJbRpd+yTvvf2Gj0TGBPEzwoXaErWYb1vaxZoX4fYLDemukrZ0TzXfVIzSumAkcDG4Q+hwiSxD5HkSaGE2MAg8ZMQ5MvfTLejSsc/qlBQUOgDzPEUUx0ixDFMfICo5rRj9+HCd6pRN+SSEE/gF64P2I3ZTrJwAAAABJRU5ErkJggg==&apos;); background-size: cover; display: block;&quot;
+  &gt;&lt;/span&gt;
+  &lt;img
+        class=&quot;gatsby-resp-image-image&quot;
+        alt=&quot;Pandas plot&quot;
+        title=&quot;Pandas plot&quot;
+        src=&quot;/static/868a208583d8b890c2d7f0ee7fbbaee0/f058b/pandas_plot.png&quot;
+        srcset=&quot;/static/868a208583d8b890c2d7f0ee7fbbaee0/c26ae/pandas_plot.png 158w,
+/static/868a208583d8b890c2d7f0ee7fbbaee0/6bdcf/pandas_plot.png 315w,
+/static/868a208583d8b890c2d7f0ee7fbbaee0/f058b/pandas_plot.png 630w,
+/static/868a208583d8b890c2d7f0ee7fbbaee0/40601/pandas_plot.png 945w,
+/static/868a208583d8b890c2d7f0ee7fbbaee0/78612/pandas_plot.png 1260w,
+/static/868a208583d8b890c2d7f0ee7fbbaee0/9d6a9/pandas_plot.png 2256w&quot;
+        sizes=&quot;(max-width: 630px) 100vw, 630px&quot;
+        style=&quot;width:100%;height:100%;margin:0;vertical-align:middle;position:absolute;top:0;left:0;&quot;
+        loading=&quot;lazy&quot;
+      /&gt;
+  &lt;/a&gt;
+    &lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Easy as it can be&lt;/p&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Aws spot instances is a great tool if you don’t need constant availability. It’s perfect for stress testing, CI builds and even beats lambda if you need to process a large number of tasks asynchronously.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Taming Europe routes, part 3]]></title><description><![CDATA[TL:DR previous parts I was approached by one of my clients with a work that required to parse almost 500 million European routes to see what…]]></description><link>https://programmernotes.info/taming-europe-routes-3/</link><guid isPermaLink="false">https://programmernotes.info/taming-europe-routes-3/</guid><pubDate>Sun, 14 Feb 2021 14:30:00 GMT</pubDate><content:encoded>&lt;h2&gt;TL:DR previous parts&lt;/h2&gt;
 &lt;p&gt;I was approached by one of my clients with a work that required to parse almost 500 million European routes to see what routes can be traveled by land transport. After some research, i decided to use graphhopper server application and python celery library, the server was found, scripts were written and i was ready to start the parsing.&lt;/p&gt;
 &lt;h2&gt;Celery configuration and tweaks&lt;/h2&gt;
 &lt;p&gt;I decided to use celery because of its flexibility and simpleness of configuration. The task was to query graphhopper server, wait for the response, then write the response from workers into the file. http request is a blocking operation that python can greatly optimize. Python does not have full concurrency support because of the &lt;a href=&quot;https://wiki.python.org/moin/GlobalInterpreterLock&quot;&gt;gil&lt;/a&gt; but blocking operations such as this can run simultaneously: when we have http socket waiting for the response python can skip the waiting in the current thread and move the next thread, this way we can have almost the full concurrency. This mechanic will eventually slow down on a large scale because of the CPU load and also slower as the process concurrency model. This is the part where celery flexibility comes in place. We can start celery in multiprocess mode by supplying &lt;code class=&quot;language-text&quot;&gt;-c&lt;/code&gt;(concurrency) flag and supply the number of processes to spawn, that way we will utilize the whole number of server cores. By default, celery will start workers with the process number equal to the number of server` cores. Because i wanted to also utilize the thread concurrency model i started workers a little bit different:&lt;/p&gt;
