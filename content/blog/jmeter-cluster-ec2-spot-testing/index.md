@@ -63,7 +63,7 @@ After that, i got 3 servers preparing to launch i wrote a simple ansible role to
   copy: src=logins.csv dest=/home/ubuntu/stress_test/logins.csv owner=ubuntu group=ubuntu
 ```
 
-Let's look into each step and see what there are doing. `Install OpenJDK uses apt to install Java 16 environment to the server. We are going to download jmeter from the official site, unzip it and overwrite some config files. `Install unzip` is required for handling zip files. `Download and Unarchive jmeter` is used to download jmeter script and unzip it into the desired location. `Copy jmeter configs and binaries` is used to tweak our JMeter settings and optimize them. Custom `JMeter` file is used because of memory settings, by default JMeter uses a very small heap size equal to just 1Gb, if you do not change this item you will get `Out of heap` error if you try to simulate a large number of requests, so we are changing this line:
+Let's look into each step and see what there are doing. `Install OpenJDK` uses apt to install Java 16 environment to the server. We are going to download jmeter from the official site, unzip it and overwrite some config files. `Install unzip` is required for handling zip files. `Download and Unarchive jmeter` is used to download jmeter script and unzip it into the desired location. `Copy jmeter configs and binaries` is used to tweak our JMeter settings and optimize them. Custom `JMeter` file is used because of memory settings, by default JMeter uses a very small heap size equal to just 1Gb, if you do not change this item you will get `Out of heap` error if you try to simulate a large number of requests, so we are changing this line:
 
 ```diff
 -: "${HEAP:="-Xms1g -Xmx1g -XX:MaxMetaspaceSize=256m"}"
