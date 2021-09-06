@@ -48,7 +48,7 @@
   },
   "scripts": {
     "build": "gatsby build",
-    "deploy": "gatsby build --prefix-paths && cp CNAME ./public && gh-pages -d public -b master",
+    "deploy": "gatsby build --prefix-paths && cp CNAME ./public && cp googlea72e3e7ba0dd07c0.html ./public && gh-pages -d public -b master",
     "develop": "gatsby develop",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "start": "npm run develop",
